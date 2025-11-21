@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code Animated Character Background</title>
+    <style>
+        /* * Inter Font from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        /* * Basic Reset and Body Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden; /* Prevents scrollbars */
+        }
+
+        /* * Hero Container */
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* * Canvas for the character background */
+        #character-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Positioned behind the content */
+        }
+
+        /* * Hero Content Styling */
+        .hero-content {
+            position: relative;
+            z-index: 2; /* In front of the canvas */
+            padding: 2rem;
+            background-color: rgba(26, 26, 26, 0.5);
+            backdrop-filter: blur(5px);
+            border-radius: 1rem;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            margin-top: 1rem;
+            max-width: 600px;
+            color: #a0a0a0;
+        }
+        
+        /* * Responsive Design Adjustments */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-content p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section">
+        <!-- The canvas element for our JavaScript animation -->
+        <canvas id="character-background"></canvas>
+
+        <!-- The foreground content -->
+        <div class="hero-content">
+            <h1>Character Pattern</h1>
+            <p>An animated background with random characters, inspired by your request and the VS Code aesthetic.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Canvas Animation Setup ---
+        const canvas = document.getElementById('character-background');
+        const ctx = canvas.getContext('2d');
+
+        // Define the characters and colors based on proximity/density
+        const densityChars = ['#', '=', '+', '%', '1', '0', '*'];
+        const densityColors = ['#ffffff', '#e0e0e0', '#c0c0c0', '#a0a0a0', '#808080', '#606060', '#505050'];
+        
+        let sphereRadius;
+        const points = [];
+        const numPoints = 1500;
+        
+        let rotationX = 0;
+        let rotationY = 0;
+
+        // --- 3D Point Generation ---
+        // Generates points on the surface of a sphere using spherical coordinates
+        function initSphere() {
+            points.length = 0;
+            sphereRadius = Math.min(canvas.width, canvas.height) * 0.35;
+            for (let i = 0; i < numPoints; i++) {
+                const theta = Math.acos(1 - 2 * (i / numPoints));
+                const phi = Math.sqrt(numPoints * Math.PI) * theta;
+                
+                const x = sphereRadius * Math.sin(theta) * Math.cos(phi);
+                const y = sphereRadius * Math.sin(theta) * Math.sin(phi);
+                const z = sphereRadius * Math.cos(theta);
+                
+                points.push({x, y, z});
+            }
+        }
+
+        // --- Main Animation Loop ---
+        function animate() {
+            // Clear the canvas
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Increment rotation angles for animation
+            rotationY += 0.005;
+            rotationX += 0.002;
+
+            const sinY = Math.sin(rotationY);
+            const cosY = Math.cos(rotationY);
+            const sinX = Math.sin(rotationX);
+            const cosX = Math.cos(rotationX);
+
+            const rotatedPoints = points.map(point => {
+                // Rotate around Y axis
+                let x = point.x * cosY - point.z * sinY;
+                let z = point.x * sinY + point.z * cosY;
+                
+                // Rotate around X axis
+                let y = point.y * cosX - z * sinX;
+                z = point.y * sinX + z * cosX;
+
+                return { ...point, x, y, z };
+            });
+
+            // Sort points by z-index so that points in front are drawn last
+            rotatedPoints.sort((a, b) => a.z - b.z);
+
+            rotatedPoints.forEach(point => {
+                const x2d = point.x + canvas.width / 2;
+                const y2d = point.y + canvas.height / 2;
+                
+                // Use the z coordinate to determine depth, color, and character
+                // Normalize z from -radius to +radius into a 0-1 range
+                const normalizedZ = (point.z + sphereRadius) / (2 * sphereRadius);
+                
+                // Only draw points that are visible (in the front hemisphere)
+                if (point.z > -sphereRadius * 0.2) { // Render slightly more than half to avoid a hard edge
+                    const index = Math.floor(normalizedZ * (densityChars.length - 1));
+                    const char = densityChars[densityChars.length - 1 - index]; // Invert index for correct character
+                    const color = densityColors[densityColors.length - 1 - index];
+                    
+                    // Adjust font size based on depth for a perspective effect
+                    const fontSize = (normalizedZ * 12 + 8);
+                    ctx.font = `${fontSize}px monospace`;
+                    ctx.fillStyle = color;
+                    ctx.fillText(char, x2d, y2d);
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // --- Setup and Start ---
+        function start() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            initSphere();
+            animate();
+        }
+
+        start();
+        window.addEventListener('resize', start);
+    </script>
+
+</body>
+</html>

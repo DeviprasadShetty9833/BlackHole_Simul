@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code Animated Character Background</title>
+    <style>
+        /* * Inter Font from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        /* * Basic Reset and Body Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden; /* Prevents scrollbars */
+        }
+
+        /* * Hero Container */
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* * Canvas for the character background */
+        #character-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section">
+        <!-- The canvas element for our JavaScript animation -->
+        <canvas id="character-background"></canvas>
+    </div>
+
+    <script>
+        // --- Canvas Animation Setup ---
+        const canvas = document.getElementById('character-background');
+        const ctx = canvas.getContext('2d');
+
+        // Define the characters and colors based on proximity/density
+        // Increased the number of bright, white '#' characters for the sphere
+        const sphereChars = ['*', '0', '1', '%', '+', '=', '#', '#', '#', '#', '#'];
+        const sphereColors = ['#606060', '#808080', '#a0a0a0', '#c0c0c0', '#e0e0e0', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'];
+        const backgroundCharacter = '·';
+        
+        let sphereRadius;
+        const spherePoints = [];
+        let numSpherePoints;
+        
+        const horizontalDiskPoints = [];
+        let numHorizontalDiskPoints;
+
+        const verticalDiskPoints = [];
+        let numVerticalDiskPoints;
+
+        const backgroundDots = [];
+        let numDots;
+
+        let rotationX = -0.1745; // Set to -10 degrees in radians for a view from below the axis
+        let rotationY = 0;
+
+        let lastTime = 0;
+        let animationFrameId;
+
+        // --- 3D Point Generation for Sphere ---
+        function initSphere() {
+            spherePoints.length = 0;
+            sphereRadius = Math.min(canvas.width, canvas.height) * 0.25;
+            for (let i = 0; i < numSpherePoints; i++) {
+                const theta = Math.acos(1 - 2 * (i / numSpherePoints));
+                const phi = Math.sqrt(numSpherePoints * Math.PI) * theta;
+                const x = sphereRadius * Math.sin(theta) * Math.cos(phi);
+                const y = sphereRadius * Math.sin(theta) * Math.sin(phi);
+                const z = sphereRadius * Math.cos(theta);
+                spherePoints.push({x, y, z, type: 'sphere'});
+            }
+        }
+
+        // --- 3D Point Generation for Horizontal Accretion Disk ---
+        function initHorizontalDisk() {
+            horizontalDiskPoints.length = 0;
+            const minRadius = sphereRadius * 1.5;
+            const maxRadius = sphereRadius * 3.5;
+            for (let i = 0; i < numHorizontalDiskPoints; i++) {
+                const radius = Math.sqrt(Math.random()) * (maxRadius - minRadius) + minRadius;
+                const angle = Math.random() * 2 * Math.PI;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const speed = (1 / radius) * 0.5;
+                horizontalDiskPoints.push({ x, y: 0, z, radius, angle, speed, type: 'horizontal_disk' });
+            }
+        }
+
+        // --- 3D Point Generation for Vertical Accretion Disk ---
+        function initVerticalDisk() {
+            verticalDiskPoints.length = 0;
+            const minRadius = sphereRadius * 1.4; 
+            const maxRadius = sphereRadius * 1.8;
+            for (let i = 0; i < numVerticalDiskPoints; i++) {
+                const radius = Math.sqrt(Math.random()) * (maxRadius - minRadius) + minRadius;
+                const angle = Math.random() * 2 * Math.PI; 
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const speed = (1 / radius) * 0.5;
+                verticalDiskPoints.push({ x, y, z: 0, radius, angle, speed, type: 'vertical_disk' });
+            }
+        }
+
+        // --- Background Dots Generation ---
+        function initBackground() {
+            backgroundDots.length = 0;
+            for (let i = 0; i < numDots; i++) {
+                backgroundDots.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height });
+            }
+        }
+
+        // --- Main Animation Loop ---
+        function animate(currentTime) {
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#4a4a4a';
+            ctx.font = '12px monospace';
+            backgroundDots.forEach(dot => ctx.fillText(backgroundCharacter, dot.x, dot.y));
+
+            rotationY -= 0.5 * deltaTime; // Rotate to the right (clockwise)
+
+            const sinY = Math.sin(rotationY);
+            const cosY = Math.cos(rotationY);
+            const sinX = Math.sin(rotationX);
+            const cosX = Math.cos(rotationX);
+
+            const animatedHorizontalDiskPoints = horizontalDiskPoints.map(point => {
+                point.angle += point.speed * 150 * deltaTime;
+                return { ...point, x: Math.cos(point.angle) * point.radius, z: Math.sin(point.angle) * point.radius };
+            });
+            
+            const animatedVerticalDiskPoints = verticalDiskPoints.map(point => {
+                point.angle -= point.speed * 150 * deltaTime; // Reversed rotation direction
+                
+                let radius = point.radius;
+                const maxBulge = point.radius * 0.3; // Bulge is 30% of the point's radius
+                const yPos = Math.sin(point.angle) * point.radius;
+                const bulgeFactor = Math.pow(1 - Math.abs(yPos / point.radius), 4); // Stronger bulge near y=0
+                radius += maxBulge * bulgeFactor;
+
+                return { ...point, x: Math.cos(point.angle) * radius, y: Math.sin(point.angle) * radius };
+            });
+
+            const allPoints = [...spherePoints, ...animatedHorizontalDiskPoints, ...animatedVerticalDiskPoints];
+
+            const rotatedPoints = allPoints.map(point => {
+                let x_rot = point.x;
+                let y_rot = point.y;
+                let z_rot = point.z;
+
+                if (point.type === 'sphere' || point.type === 'horizontal_disk') {
+                    x_rot = point.x * cosY - point.z * sinY;
+                    z_rot = point.x * sinY + point.z * cosY;
+                }
+                
+                y_rot = y_rot * cosX - z_rot * sinX;
+                let final_z = y_rot * sinX + z_rot * cosX;
+
+                return { ...point, x: x_rot, y: y_rot, z: final_z };
+            });
+
+            rotatedPoints.sort((a, b) => a.z - b.z);
+
+            rotatedPoints.forEach(point => {
+                const x2d = point.x + canvas.width / 2;
+                const y2d = point.y + canvas.height / 2;
+                
+                if (point.type === 'sphere') {
+                    if (point.z > 0) {
+                        const normalizedFrontZ = point.z / sphereRadius;
+                        if (normalizedFrontZ > 0.8) { 
+                            // Black center
+                        } else {
+                            const ringNorm = (0.8 - normalizedFrontZ) / 0.8; 
+                            const index = Math.floor(ringNorm * (sphereChars.length - 1));
+                            const char = sphereChars[index];
+                            const color = sphereColors[index];
+                            const normalizedZ = (point.z + sphereRadius) / (2 * sphereRadius);
+                            const fontSize = (normalizedZ * 12 + 8);
+                            ctx.font = `${fontSize}px monospace`;
+                            ctx.fillStyle = color;
+                            ctx.fillText(char, x2d, y2d);
+                        }
+                    }
+                } else if (point.type === 'horizontal_disk') {
+                    const effectiveRadius = sphereRadius * 3.5;
+                    const normalizedZ = (point.z + effectiveRadius) / (2 * effectiveRadius);
+                    let char, color;
+                    if (normalizedZ < 0.30) {
+                        char = Math.random() < 0.5 ? '0' : '1';
+                        color = '#808080';
+                    } else if (normalizedZ > 0.60) { // Increased the size of the '#' band
+                        char = '#';
+                        color = '#ffffff';
+                    } else {
+                        char = '=';
+                        color = '#c0c0c0';
+                    }
+                    const fontSize = (normalizedZ * 10 + 6);
+                    ctx.font = `${fontSize}px monospace`;
+                    ctx.fillStyle = color;
+                    ctx.fillText(char, x2d, y2d);
+                } else if (point.type === 'vertical_disk') {
+                    const minRadius = sphereRadius * 1.4;
+                    const maxRadius = sphereRadius * 1.8;
+                    const innerPartThreshold = minRadius + (maxRadius - minRadius) * 0.6; // Increased inner part to 60%
+
+                    let char, color;
+
+                    if (point.radius < innerPartThreshold) {
+                        char = '#';
+                        color = '#ffffff'; // Inner part is always bright white '#'
+                    } else {
+                        // Outer part follows z-depth logic
+                        const effectiveRadius = sphereRadius * 3.5;
+                        const normalizedZ = (point.z + effectiveRadius) / (2 * effectiveRadius);
+                        if (normalizedZ < 0.30) {
+                            char = '0';
+                            color = '#808080';
+                        } else {
+                            char = '=';
+                            color = '#c0c0c0';
+                        }
+                    }
+                    
+                    const effectiveRadius = sphereRadius * 3.5;
+                    const normalizedZ = (point.z + effectiveRadius) / (2 * effectiveRadius);
+                    const fontSize = (normalizedZ * 10 + 6);
+                    ctx.font = `${fontSize}px monospace`;
+                    ctx.fillStyle = color;
+                    ctx.fillText(char, x2d, y2d);
+                }
+            });
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // --- Setup and Start ---
+        function start() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const screenArea = canvas.width * canvas.height;
+            numSpherePoints = Math.floor(screenArea / 1200);
+            numHorizontalDiskPoints = Math.floor(screenArea / 900);
+            numVerticalDiskPoints = Math.floor(screenArea / 900);
+            numDots = Math.floor(screenArea / 900);
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            initSphere();
+            initHorizontalDisk();
+            initVerticalDisk();
+            initBackground();
+            
+            lastTime = performance.now();
+            animate(lastTime);
+        }
+
+        start();
+        window.addEventListener('resize', start);
+    </script>
+
+</body>
+</html>
