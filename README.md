@@ -7,8 +7,8 @@
 
 ---
 
-# Output
+# 🤣 Output
 ![Output](assets/Output1.png)
 
-# Expected
+# 🪐 Expected
 ![Expected](assets/Exp_BlackHole.jpeg)
