@@ -10,5 +10,7 @@
 # 🤣 Output
 ![Output](assets/Output1.png)
 
+![Status](https://img.shields.io/badge/Status-In_Progeess-darkgreen?style=for-the-badge&logo=firefox&logoColor=white)
+
 # 🪐 Expected
 ![Expected](assets/Exp_BlackHole.jpeg)
