@@ -10,6 +10,8 @@
 
 # Overview
 
+A BlackHole Simulation using ASCII characters based on prximity of points from screen 
+
 # 🪐 Output
 ![Output](assets/Output1.png)
 
