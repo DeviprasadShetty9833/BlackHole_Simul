@@ -10,10 +10,10 @@
 
 # Overview
 
-A BlackHole Simulation using ASCII characters based on prximity of points from screen 
+A BlackHole Simulation using ASCII characters based on color & prximity of points from screen 
 
 - `#` for nearest points
-- 
+- `0`, `1` for farthest points
 - `=`, `+` for between them
 
 # 🪐 Output
