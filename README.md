@@ -12,6 +12,10 @@
 
 A BlackHole Simulation using ASCII characters based on prximity of points from screen 
 
+- `#` for nearest points
+- 
+- `=`, `+` for between them
+
 # 🪐 Output
 ![Output](assets/Output1.png)
 
