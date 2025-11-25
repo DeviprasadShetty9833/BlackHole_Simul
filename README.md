@@ -10,12 +10,12 @@
 
 # Overview
 
-# 🤣 Output
+# 🪐 Output
 ![Output](assets/Output1.png)
 
 ![Status](https://img.shields.io/badge/Status-In_Progeess-darkgreen?style=for-the-badge&logo=html5&logoColor=white)
 
-# 🪐 Expected
+# 🤣 What I Expected
 ![Expected](assets/Exp_BlackHole.jpeg)
 
 ---
