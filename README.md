@@ -19,7 +19,7 @@ A BlackHole Simulation using ASCII characters based on color & prximity of point
 # 🪐 Output
 ![Output](assets/Screencastfrom2025-11-2909-53-16-ezgif.com-video-to-gif-converter.gif)
 
-![Status](https://img.shields.io/badge/Status-In_Progeess-darkgreen?style=for-the-badge&logo=html5&logoColor=white)
+![Status](https://img.shields.io/badge/Status-In_Progress-darkgreen?style=for-the-badge&logo=html5&logoColor=white)
 
 # 🤣 What I Expected
 ![Expected](assets/Exp_BlackHole.jpeg)
