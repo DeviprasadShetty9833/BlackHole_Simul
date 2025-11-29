@@ -17,7 +17,7 @@ A BlackHole Simulation using ASCII characters based on color & prximity of point
 - `=`, `+` for between them
 
 # 🪐 Output
-![Output](assets/Output1.png)
+![Output](assets/Screencastfrom2025-11-2909-53-16-ezgif.com-video-to-gif-converter.gif)
 
 ![Status](https://img.shields.io/badge/Status-In_Progeess-darkgreen?style=for-the-badge&logo=html5&logoColor=white)
 
